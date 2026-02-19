@@ -1,6 +1,7 @@
 from flask import *
 # imported pymysql after installing it in the terminal
 import pymysql
+import pymysql.cursors
 app=Flask (__name__)
 @app.route('/api/signup',methods=['POST'])
 def signup():
@@ -23,5 +24,30 @@ def signup():
     # save the changes
     connection.commit()
     return jsonify({'success':'thanks for joining'})
+# sign in route
+@app.route('/api/signin')
+def signin():
+    # extract host data
+    username=request.form['username']
+    password=request.form['password']
+    # connect database
+    connection = pymysql.connect(host='localhost',user='root',password='',database='dailyyoughurts_Swala')
+    # create cursor
+    cursor = connection.cursor(pymysql.cursors.DictCursor)
+    # do the sql querry
+    sql ='select * from users where username = %s and password = %s'
+    # preapare data to replace placeholders
+    data = (username,password)
+    # execute data
+    cursor.execute(sql,data)
+    # check if there were rows found
+    count=cursor.rowcount
+    if count ==0:# if the rows is zero == invalid cridentials
+        return jsonify({'message':'Log in failed'})
+    else:
+         # if the cursor has returned a valid user or atleast a row
+        user = cursor.fetchone()
+    
+    return jsonify({'message':'log in successful','user':user})
 if __name__=='__main__':
     app.run(debug=True)
